@@ -350,7 +350,7 @@ Luego crearemos una plantilla más personalizada donde terminaría así
     <img src="img/new_post.png"></img>
 
 23. Ahora debemos modificar el post_new que está en views.py para que al presionar en guardar guarde los datos ingresados y nos regrese a la principal
-
+    ```
     from django.shortcuts import redirect
     --------------------------------------------------------------
     def post_new(request):
@@ -365,8 +365,8 @@ Luego crearemos una plantilla más personalizada donde terminaría así
     else:
         form = PostForm()
     return render(request, 'blog/post_edit.html', {'form': form})
+    ```
     
-
     <img src="img/post_create.png"></img>
     <img src="img/create_example.png"></img>
 
