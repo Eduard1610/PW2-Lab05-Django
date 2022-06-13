@@ -209,7 +209,7 @@ A partir de aquí podremos iniciar a detallar nuestra plantilla donde empezaremo
         </body>
         </html>
     ```
-<img src="img/image6.jpeg"></img>
+    <img src="img/image6.jpeg"></img>
 Luego crearemos una plantilla más personalizada donde terminaría así
 
     ```sh
@@ -236,16 +236,16 @@ Luego crearemos una plantilla más personalizada donde terminaría así
             </body>
         </html>
     ```
-<img src="img/image7.jpeg"></img>
+    <img src="img/image7.jpeg"></img>
 
-14)Hemos creado nuestra plantilla, pero aún no hemos mostrado los datos de los post creados previamente, para eso debemos de hacer uso de los Datos Dinámicos, los cuales los pasaremos a la hora de llamar la plantilla en blog/views.py
+14. Hemos creado nuestra plantilla, pero aún no hemos mostrado los datos de los post creados previamente, para eso debemos de hacer uso de los Datos Dinámicos, los cuales los pasaremos a la hora de llamar la plantilla en blog/views.py
 
     ```sh
         def post_list(request):
         posts = Post.objects.filter(published_date__lte=timezone.now()).order_by('published_date')
         return render(request, 'blog/post_list.html', {'posts' : posts}) 
     ```
-15)Una vez que hemos pasado los post a la plantilla, podemos usarlos para ir mostrando la información según la base de datos, para esto usaremos etiquetas de plantilla, y mediante el uso del bucle "for in" iremos mostrando los datos, tal como se muestra a continuación. 
+15. Una vez que hemos pasado los post a la plantilla, podemos usarlos para ir mostrando la información según la base de datos, para esto usaremos etiquetas de plantilla, y mediante el uso del bucle "for in" iremos mostrando los datos, tal como se muestra a continuación. 
 
      ```sh
          {% for post in posts %}
@@ -256,9 +256,160 @@ Luego crearemos una plantilla más personalizada donde terminaría así
             </div>
         {% endfor %} 
     ```
-16)Luego de esto, podemos hacer que nuestro sitio web tenga una mejor apariencia, y para esto usaremos CSS. Creamos las clases correspondientes y le añadimos las propiedades correctas y nuestro sitio quedará mucho mejor y con más vida
+16. Luego de esto, podemos hacer que nuestro sitio web tenga una mejor apariencia, y para esto usaremos CSS. Creamos las clases correspondientes y le añadimos las propiedades correctas y nuestro sitio quedará mucho mejor y con más vida
 
-<img src="img/image8.png"></img>
+    <img src="img/image8.png"></img>
+
+17) Creamos una plantilla base mediante la cual podemos extender a cada pagina de nuestro blog. Para conectarlas usamos la etiqueta {% extends 'blog/base.html' %} que unirá el post_list.html con base.html
+
+    ``` {% extends 'blog/base.html' %}
+        {% block content %}
+            <div class="post">
+                {% if post.published_date %}
+                    <div class="date">
+                        {{ post.published_date }}
+                    </div>
+                {% endif %}
+                {% if user.is_authenticated %}
+                    <a class="btn btn-default" href="{% url 'post_edit' pk=post.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
+                {% endif %}
+                <h2>{{ post.title }}</h2>
+                <p>{{ post.text|linebreaksbr }}</p>
+            </div>
+        {% endblock %}
+    ```
+
+18) Para añadir un URL que abra el post seleccionado creamos post_lis.html (este estará extendido con base.html), en el cual vincularemos el titulo del post con el href y pk=post.pk, el cual generará el "id" del post al que sleeccionemos y lo abrirá de la base de datos: 
+    ```
+    <h2><a href="{% url 'post_detail' pk=post.pk %}">{{ post.title }}</a></h2>
+    ```
+    Ahora en urls.py añadimos un path que especifica el titulo al que hemos seleccionado, "/post/x_number"; y en view lo especificamos con Post.objects.get(pk=pk). Y si buscamos un post que no existe aparecerá DoesNotExist, esto lo cambiaremos a Page not found para que sea más presentable.
+    <img src="img/not_found.png"></img>
+19) Pero al momento de abrir un post sale error, esto porque no hay una plantilla para su visualización, así que la creamos con post_detail.html (extendiendolo siempre con base.html)
+    ```
+    {% extends 'blog/base.html' %}
+    {% block content %}
+        <div class="post">
+            {% if post.published_date %}
+                <div class="date">
+                    {{ post.published_date }}
+                </div>
+            {% endif %}
+            <h2>{{ post.title }}</h2>
+            <p>{{ post.text|linebreaksbr }}</p>
+        </div>
+    {% endblock %}
+    ```
+    
+    Y con esto ya tenemos una visualización del post cuando le hagamos click
+    <img src="img/post_example.png"></img>
+    <img src="img/post_view.png"></img>
+
+20) Para crear el formulario de un nuevo post, esto en un nuevo archivo form.py en el cual irán 2 apartados, títle y text.
+    ```
+    blog
+    └── forms.py
+
+    from django import forms
+    from .models import Post
+
+    class PostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ('title', 'text',)
+    ```
+    
+21) El simbolo que clickearemos para crear un nuevo post será un signo de suma, mediante la clase "glyphicon glyphicon-plus" (la cual tiene esa imagen). Por ello añadimos la siguiente linea de codigo a base.html en el div "page-header" (Que es el html principal que definimos como base)
+    ```
+    <a href="{% url 'post_new' %}" class="top-menu"><span class="glyphicon glyphicon-plus"></span></a>
+    ```
+22) añadimos un path a blog/urls.py
+    ```
+    path('post/new', views.post_new, name='post_new'),
+    ```
+
+    Nos salta un error y debemos añadir en view.py al inicio y al final
+    ```
+    from .fors import PostForm
+    -----------------------------
+    def post_new(request):
+        form = PostForm()
+        return render(request, 'blog/post_edit.html', {'form': form})
+    ```
+    Nos salta un error porque no tenemos una plantilla en la que se muestre; así que la creamos en post_edit.html, en la cual tambien añadimos el boton de guardar
+    ```
+    {% extends 'blog/base.html' %}
+    {% block content %}
+        <h2>New post</h2>
+        <form method="POST" class="post-form">{% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="save btn btn-default">Save</button>
+        </form>
+    {% endblock %}
+    ```
+    <img src="img/new_post.png"></img>
+
+23. Ahora debemos modificar el post_new que está en views.py para que al presionar en guardar guarde los datos ingresados y nos regrese a la principal
+
+    from django.shortcuts import redirect
+    --------------------------------------------------------------
+    def post_new(request):
+    if request.method == "POST":
+        form = PostForm(request.POST)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.author = request.user
+            post.published_date = timezone.now()
+            post.save()
+            return redirect('post_detail', pk=post.pk)
+    else:
+        form = PostForm()
+    return render(request, 'blog/post_edit.html', {'form': form})
+    
+
+    <img src="img/post_create.png"></img>
+    <img src="img/create_example.png"></img>
+
+24) Finalmente si queremos editar un post, añadimos un boton en forma de lapiz en post_detail.html similar a como añadimos el simbolo +
+    ```
+    <a class="btn btn-default" href="{% url 'post_edit' pk=post.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
+    ```
+    el path para editar en urls.py
+    ```
+    path('post/<int:pk>/edit/', views.post_edit, name='post_edit'),
+    ```
+    y la funcion en views.py
+    ```
+    def post_edit(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    if request.method == "POST":
+        form = PostForm(request.POST, instance=post)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.author = request.user
+            post.published_date = timezone.now()
+            post.save()
+            return redirect('post_detail', pk=post.pk)
+    else:
+        form = PostForm(instance=post)
+    return render(request, 'blog/post_edit.html', {'form': form})
+    ```
+    <img src="img/edit_post.png"></img>
+    <img src="img/edited_post.png"></img>
+25) Y como un apartado de seguridad, en el cual solo cuando se inicia sesion se pueden editar o crear nuevos post, añadiremos un autenticador que verifica si la persona es un usuario de la pagina.
+En base.html cuando cree el post:
+    ```
+    {% if user.is_authenticated %}
+    <a href="{% url 'post_new' %}" class="top-menu"><span class="glyphicon glyphicon-plus"></span></a>
+    {% endif %}
+    ```
+    Y en post_detail.html donde se edita el post
+    ```
+    {% if user.is_authenticated %}
+    <a class="btn btn-default" href="{% url 'post_edit' pk=post.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
+    {% endif %}
+    ```
+    <img src="img/incognito_post.png"></img>
 
 
 -   Crear un video tutorial donde realice las operaciones CRUD (URL public reproducible online)
