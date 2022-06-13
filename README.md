@@ -284,6 +284,8 @@ Luego crearemos una plantilla más personalizada donde terminaría así
     <h2><a href="{% url 'post_detail' pk=post.pk %}">{{ post.title }}</a></h2>
     ```
     Ahora en urls.py añadimos un path que especifica el titulo al que hemos seleccionado, "/post/x_number"; y en view lo especificamos con Post.objects.get(pk=pk). Y si buscamos un post que no existe aparecerá DoesNotExist, esto lo cambiaremos a Page not found para que sea más presentable.
+    
+    
     <img src="img/not_found.png"></img>
 19) Pero al momento de abrir un post sale error, esto porque no hay una plantilla para su visualización, así que la creamos con post_detail.html (extendiendolo siempre con base.html)
     ```
